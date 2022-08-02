@@ -1,2 +1,2 @@
-# AGOLPortalUserManagement
+# AGOL/Portal User Management
 ArcGIS Online and ArcGIS Enterprise (Portal) federated user (IDP) manager. If a user account is not present or disabled, it will disable the account. If the account is present and enabled, it will ensure the system has the account enabled. It will also send emails alerting of actions taken. This script could be easily modified to allow for First and Last name updates, etc.
