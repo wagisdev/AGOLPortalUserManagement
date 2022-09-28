@@ -7,9 +7,9 @@
 #
 # Author:      John Spence
 #
-# Created:     8/1/2022
-# Modified:     
-# Modification Purpose:
+# Created:     2022-09-01
+# Modified:    2022-09-28 
+# Modification Purpose:  Added in support for Portal.
 #
 #
 #-------------------------------------------------------------------------------
@@ -22,30 +22,30 @@
 # 888888888888888888888888888888888888888888888888888888888888888888888888888888
 
 # Portal Config
-portalURL = 'https://www.arcgis.com' #your AGOL URL or portal URL
-portalUSR = '' #your AGOL/Portal user name
-portalPAS = '' #your AGOL/Portal password (base64 encoded // Security through obscurity :P )
+portalURL = 'https://www.arcgis.com/' #your AGOL URL
+portalUSR = '' #your AGOL user name
+portalPAS = '' #your AGOL password (base64 encoded // Security through obscurity :P )
 
 # Script Type
-scriptType = 'Portal User Management'
+scriptType = 'AGOL User Management'
 
 # ADFS Config
-adfsServer = 'something.something.com'
-adfsRootDomain = 'something.somethingadfslike.com'
-ldapUSR = r''
-ldapPAS = '' #base64 encoded // Security through obscurity :P )
+adfsServer = 'subdomain.domain.com'
+adfsRootDomain = 'subdomain.domain.com'
+ldapUSR = r'' #User Name
+ldapPAS = '' #(base64 encoded // Security through obscurity :P )
 
 # Send confirmation of rebuild to
-adminNotify = 'someone@something.com'
-deptAdminNotify = 'someoneelse@something.com'
+adminNotify = 'gisadmin@domain.com'
+deptAdminNotify = 'info@domain.com'
 
 # Configure the e-mail server and other info here.
-mail_server = 'smtprelay.something.com'
-mail_from = '{} <noreply@something.com>'.format(scriptType)
+mail_server = 'smtprelay.domain.com'
+mail_from = '{} <noreply@domain.com>'.format(scriptType)
 mail_subject = '{} Automated Actions Notification'.format(scriptType)
 
 # Test User Override
-testUser = 'testuser@something.com' # Sends a test message showing actions that would be taken, but not.
+testUser = ''
 
 # ------------------------------------------------------------------------------
 # DO NOT UPDATE BELOW THIS LINE OR RISK DOOM AND DISPAIR!  Have a nice day!
@@ -120,9 +120,9 @@ def ldapCheck(portalUserCheck, portalCheck):
     conn = Connection(Server('LDAP://{}'.format(adfsServer)), auto_bind = True, user = ldapUSR, password = base64.b64decode(ldapPAS))
 
     if portalCheck != 0:
-        conn.search('dc=####,dc==####,,dc==####,,dc==####,', '(&(objectclass=person)(SamAccountName={}))'.format(portalUserCheck), attributes=['Name', 'Department', 'SamAccountName', 'UserPrincipalName', 'userAccountControl'])
+        conn.search('dc=subdomain,dc=domain,dc=com', '(&(objectclass=person)(SamAccountName={}))'.format(portalUserCheck), attributes=['Name', 'Department', 'SamAccountName', 'UserPrincipalName', 'userAccountControl'])
     else:
-        conn.search('dc==####,,dc==####,,dc==####,,dc==####,', '(&(objectclass=person)(UserPrincipalName={}))'.format(portalUserCheck), attributes=['Name', 'Department', 'SamAccountName', 'UserPrincipalName', 'userAccountControl'])
+        conn.search('dc=subdomain,dc=domain,dc=com', '(&(objectclass=person)(UserPrincipalName={}))'.format(portalUserCheck), attributes=['Name', 'Department', 'SamAccountName', 'UserPrincipalName', 'userAccountControl'])
 
     respCode = 0
     if len (conn.entries) != 0:
@@ -208,6 +208,7 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
             ueuserRecommendedAction = ue[4]
             print (ueuserFullName, ' ', ueuseridpUsername, ' ', ueuserDept, ' ', ueuserAction)
             rowLine = '''
+
               <tr>
                 <td>{}</td>
                 <td>{}</td>
@@ -215,6 +216,7 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
                 <td>{}</td>
                 <td>{}</td>
               </tr>
+
             '''.format(ueuserFullName, ueuseridpUsername, ueuserDept, ueuserAction, ueuserRecommendedAction)
             UErowOutput = UErowOutput + rowLine
 
@@ -233,6 +235,7 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
             uduserRecommendedAction = ud[4]
             print (uduserFullName, ' ', uduseridpUsername, ' ', uduserDept, ' ', uduserAction)
             rowLine = '''
+
               <tr>
                 <td>{}</td>
                 <td>{}</td>
@@ -240,6 +243,7 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
                 <td>{}</td>
                 <td>{}</td>
               </tr>
+
             '''.format(uduserFullName, uduseridpUsername, uduserDept, uduserAction, uduserRecommendedAction)
             UDrowOutput = UDrowOutput + rowLine
 
@@ -258,6 +262,7 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
             uaduserRecommendedAction = uad[4]
             print (uaduserFullName, ' ', uaduseridpUsername, ' ', uaduserDept, ' ', uaduserAction)
             rowLine = '''
+
               <tr>
                 <td>{}</td>
                 <td>{}</td>
@@ -265,6 +270,7 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
                 <td>{}</td>
                 <td>{}</td>
               </tr>
+
             '''.format(uaduserFullName, uaduseridpUsername, uaduserDept, uaduserAction, uaduserRecommendedAction)
             UArowOutput = UArowOutput + rowLine
 
@@ -372,23 +378,29 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
     <html>
     <head>
     <style>
+
     table {
         font-family: arial, sans-serif;
         border-collapse: collapse;
         width: 100%;
     }
+
     td, th {
         border: 1px solid #dddddd;
         text-align: left;
         padding: 8px;
     }
+
     tr:nth-child(even) {
         background-color: #dddddd;
     }
+
     </style>
     </head>
+
     <body>
     <h2 style="font-family:verdana;"><b>User Management Actions</b></h2>
+
     '''
 
     payLoadHTMLEnd = '''
@@ -398,10 +410,12 @@ def sendNotification(usersEnabled, usersDisabled, usersDisabledAlready):
     <bold>*Seasonal worker accounts will auto enable when AD user account is enabled.</bold>
     </div>
     <div>
-    [This is an automated system message. Please contact someone@something.com for all questions.]
+    [This is an automated system message. Please contact gisdba@bellevuewa.gov for all questions.]
     </div>
+
     </body>
     </html>
+
     '''
 
     payLoadHTML = payLoadHTMLStart + UDpayLoadHTML + UEpayLoadHTML + UApayLoadHTML + payLoadHTMLEnd
